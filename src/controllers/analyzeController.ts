@@ -164,13 +164,11 @@ export const analyzeWallet = async (req: Request, res: Response) => {
         const aiAnalysis = await getAIAnalysis(prompt);
 
         // 6. Save to MongoDB
-        console.log('Saving analysis to MongoDB');
         const analysis = new Analysis({
             ...aiAnalysis,
             timestamp: currentTimestamp
         });
         await analysis.save();
-        console.log('Analysis saved successfully');
 
         // 7. Send response
         res.status(200).json(aiAnalysis);
