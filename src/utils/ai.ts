@@ -2,28 +2,29 @@ import Anthropic from '@anthropic-ai/sdk';
 import { TokenPrice } from '../utils/types';
 
 interface AIAnalysisResponse {
-    unrealised_pnl: string;
-    user_wallet_address: string;
-    chain: string;
-    tokens: Array<{
-        token_name: string;
-        token_address: string;
-        token_balance: string;
-        token_price_in_USD: string;
-    }>;
-    transaction_history: Array<{
-        transaction_id: string;
-        transaction_type: string;
-        transaction_amount: string;
-        transaction_time: string;
-        transaction_status: string;
-    }>;
-    short_descriptive_analysis_of_portfolio: string;
-    vulnerable_assets: Array<{
-        asset_name: string;
-        reason: string;
-    }>;
-    suggestions: string;
+  unrealised_pnl: string;
+  user_wallet_address: string;
+  chain: string;
+  tokens: Array<{
+    token_name: string;
+    token_address: string;
+    token_balance: string;
+    token_price_in_USD: string;
+  }>;
+  transaction_history: Array<{
+    transaction_id: string;
+    transaction_type: string;
+    transaction_amount: string;
+    transaction_time: string;
+    transaction_status: string;
+  }>;
+  short_descriptive_analysis_of_portfolio: string;
+  vulnerable_assets: Array<{
+    asset_name: string;
+    asset_token_symbol: string;
+    reason: string;
+  }>;
+  suggestions: string;
 }
 
 export const generateAIPrompt = (

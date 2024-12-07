@@ -16,7 +16,7 @@ export const analyzeWallet = async (req: Request, res: Response) => {
 
         // 2. Fetch token balances
         const tokenBalances = await fetchTokenBalances(alchemy, address);
-
+    
         // 3. Fetch top tokens by market cap and price difference
         const topTokens = await fetchTopTokensByMarketCap(duration);
 
@@ -31,6 +31,7 @@ export const analyzeWallet = async (req: Request, res: Response) => {
 
         // 5. Get AI analysis
         const aiAnalysis = await getAIAnalysis(prompt);
+        console.log("aiAnalysis", aiAnalysis);
 
         // 6. Save to MongoDB
         const analysis = new Analysis({
