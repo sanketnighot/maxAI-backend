@@ -119,7 +119,10 @@ ANALYSIS REQUIREMENTS:
    - Underperforming tokens
    - Missed buy/sell opportunities
 4. Provide actionable trading suggestions based on market trends
-5. The unrealisedPnL can be calculated from taking out the average of the last 7 days of the token prices from the market data.
+5. Key Considerations in calculating the unrealised PnL:
+    - Use Current Price: Unrealised PnL is based on the current market price compared to the weighted average purchase price (WAC) or initial investment cost.
+    - Track Holdings Over Time: Consider the actual balance of the asset and adjust for transactions affecting the portfolio.
+    - Avoid Maximum/Minimum Price Differences: Unrealised PnL is not about hypothetical high or low prices but the actual value if the asset were sold now.
 6. for user's token/assets you might get the token balance in the form of hexadecimal value, you need to convert it into a the given chain token value.
 7. After converting the token value, you can convert the token value into USD using the current price from the market data.
 9. For top gainers and losers you can use the data of the top 10 tokens from the market data and then you can find the top gainer and top loser from that data.

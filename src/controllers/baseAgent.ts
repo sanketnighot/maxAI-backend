@@ -61,7 +61,10 @@ export const initializeAgent = async () => {
   - Do not include comments, markdown, or any non-JSON content in your response.
 
   When analyzing user data, evaluate the following:
-  - Unrealized PnL (Profit and Loss) based on provided market data.
+  - Key Considerations in calculating Unrealised PnL:
+    - Use Current Price: Unrealised PnL is based on the current market price compared to the weighted average purchase price (WAC) or initial investment cost.
+    - Track Holdings Over Time: Consider the actual balance of the asset and adjust for transactions affecting the portfolio.
+    - Avoid Maximum/Minimum Price Differences: Unrealised PnL is not about hypothetical high or low prices but the actual value if the asset were sold now.
   - Missed trading opportunities and timing insights.
   - Portfolio risks including underperforming assets and insufficient staking funds.
   - Actionable trading suggestions derived from market trends.
