@@ -23,6 +23,7 @@ export const initializeAgent = async () => {
     configuration: {
       baseURL: "https://api.x.ai/v1",
     },
+    temperature: 0.1
   });
 
   const walletDataStr = await createOrLoadWallet();
