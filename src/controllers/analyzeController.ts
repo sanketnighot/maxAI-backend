@@ -135,13 +135,14 @@ export const analyzeWallet = async (req: Request, res: Response) => {
         
         // 1. Fetch user transactions
         const transactions = await alchemy.core.getAssetTransfers({
-            fromBlock: "0x0",
-            fromAddress: address,
-            category: [
-                AssetTransfersCategory.EXTERNAL,
-                AssetTransfersCategory.INTERNAL,
-                AssetTransfersCategory.ERC20,
-            ],
+          fromBlock: "0x0",
+          fromAddress: address,
+          category: [
+            AssetTransfersCategory.EXTERNAL,
+            AssetTransfersCategory.INTERNAL,
+            AssetTransfersCategory.ERC20,
+          ],
+          maxCount: 10,
         });
 
         // 2. Fetch token balances
@@ -163,11 +164,13 @@ export const analyzeWallet = async (req: Request, res: Response) => {
         const aiAnalysis = await getAIAnalysis(prompt);
 
         // 6. Save to MongoDB
+        console.log('Saving analysis to MongoDB');
         const analysis = new Analysis({
             ...aiAnalysis,
             timestamp: currentTimestamp
         });
         await analysis.save();
+        console.log('Analysis saved successfully');
 
         // 7. Send response
         res.status(200).json(aiAnalysis);
