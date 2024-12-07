@@ -11,3 +11,10 @@ export interface AnalyzeRequest {
     chain: string;
     duration: number;
 } 
+
+export interface TokenBalance {
+    token_name: string;
+    token_symbol: string;
+    balance: string;
+    token_id?: string;
+}
