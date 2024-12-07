@@ -17,10 +17,6 @@ const WALLET_DATA_FILE = "wallet_data.txt";
  * @returns Agent executor and config
  */
 export const initializeAgent = async () => {
-  // Initialize LLM
-  // const llm = new ChatOpenAI({
-  //   model: "gpt-4o-mini",
-  // });
   const llm = new ChatOpenAI({
     model: "grok-beta",
     apiKey: process.env.XAI_API_KEY,
