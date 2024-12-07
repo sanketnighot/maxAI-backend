@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import analyzeRoutes from './routes/analyzeRoutes';
+// import agentRoutes from './routes/agentRoute';
+import baseAnalysisRoutes from './routes/baseAnalysis';
 
 // Load environment variables
 dotenv.config();
@@ -35,6 +37,7 @@ app.get('/', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api', analyzeRoutes);
+app.use("/api", baseAnalysisRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
