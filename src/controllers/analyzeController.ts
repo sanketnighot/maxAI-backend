@@ -112,20 +112,16 @@ async function getAIAnalysis(prompt: string) {
             max_tokens_to_sample: 4000,
             temperature: 0.1
         });
-        console.log(completion.completion);
 
         // Parse the response to ensure it's valid JSON
         const analysisData = JSON.parse(completion.completion);
         return analysisData;
     } catch (error) {
-        console.error('AI Analysis error:', error);
         throw new Error('Failed to get AI analysis');
     }
 }
 
 export const analyzeWallet = async (req: Request, res: Response) => {
-    console.log('Starting wallet analysis:', { address: req.body.address, chain: req.body.chain });
-    
     try {
         const { address, chain, duration } = req.body as AnalyzeRequest;
         
@@ -133,13 +129,11 @@ export const analyzeWallet = async (req: Request, res: Response) => {
             apiKey: process.env.ALCHEMY_API_KEY,
             network: getAlchemyNetwork(chain)
         };
-        console.log('Initialized Alchemy with network:', chain);
         
         const alchemy = new Alchemy(config);
         const currentTimestamp = Math.floor(Date.now() / 1000);
         
         // 1. Fetch user transactions
-        console.log('Fetching transactions for address:', address);
         const transactions = await alchemy.core.getAssetTransfers({
             fromBlock: "0x0",
             fromAddress: address,
@@ -149,20 +143,14 @@ export const analyzeWallet = async (req: Request, res: Response) => {
                 AssetTransfersCategory.ERC20,
             ],
         });
-        console.log('Fetched transactions count:', transactions.transfers.length);
 
         // 2. Fetch token balances
-        console.log('Fetching token balances');
         const tokenBalances = await alchemy.core.getTokenBalances(address);
-        console.log('Fetched token balances count:', tokenBalances.tokenBalances.length);
 
         // 3. Fetch top tokens by market cap and price difference
-        console.log('Fetching market data');
         const topTokens = await fetchTopTokensByMarketCap(duration);
-        console.log('Fetched top tokens count:', topTokens.length);
 
         // 4. Generate AI prompt and get analysis
-        console.log('Generating AI analysis');
         const prompt = generateAIPrompt(
             address,
             chain,
@@ -173,24 +161,18 @@ export const analyzeWallet = async (req: Request, res: Response) => {
 
         // 5. Get AI analysis
         const aiAnalysis = await getAIAnalysis(prompt);
-        console.log('Received AI analysis');
-        console.log(aiAnalysis);
 
         // 6. Save to MongoDB
-        console.log('Saving analysis to MongoDB');
         const analysis = new Analysis({
             ...aiAnalysis,
             timestamp: currentTimestamp
         });
         await analysis.save();
-        console.log('Analysis saved successfully');
 
         // 7. Send response
-        console.log('Sending response to client');
         res.status(200).json(aiAnalysis);
 
     } catch (error) {
-        console.error('Analysis error:', error);
         res.status(500).json({ error: 'Failed to analyze wallet' });
     }
 };
@@ -221,7 +203,27 @@ async function fetchTopTokensByMarketCap(duration: number): Promise<TokenPrice[]
 
         return filteredTokens;
     } catch (error) {
-        console.error('Error fetching market data:', error);
         return [];
     }
-} 
+}
+
+export const getAnalysisByAddress = async (req: Request, res: Response) => {
+    try {
+        const { address } = req.params;
+
+        const reports = await Analysis.find({ user_wallet_address: address })
+            .sort({ timestamp: -1 });
+        
+        res.status(200).json({
+            success: true,
+            count: reports.length,
+            data: reports
+        });
+
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch analysis reports' 
+        });
+    }
+}; 
