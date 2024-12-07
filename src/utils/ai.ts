@@ -21,9 +21,31 @@ interface AIAnalysisResponse {
     short_descriptive_analysis_of_portfolio: string;
     vulnerable_assets: Array<{
         asset_name: string;
+        asset_token_symbol: string;
         reason: string;
     }>;
-    suggestions: string;
+    suggestions: {
+        stake: {
+            token_name: string;
+            amount: string;
+        };
+        move: {
+            token_name: string;
+            from: string;
+            to: string;
+            amount: string;
+        };
+    };
+    market_trend_analysis: {
+        top_gainer: {
+            token_name: string;
+            price_change: string;
+        };
+        top_loser: {
+            token_name: string;
+            price_change: string;
+        };
+    };
 }
 
 export const generateAIPrompt = (
@@ -31,36 +53,12 @@ export const generateAIPrompt = (
     chain: string,
     transactions: any[],
     tokenBalances: any[],
-    topTokens: TokenPrice[]
+    topTokens: TokenPrice[],
 ): string => {
-    return `CRITICAL: You must respond with ONLY a JSON object. No other text, no markdown formatting, no explanations before or after. Any text that isn't part of the JSON object will cause a system error.
+    return `
+CRITICAL: You must respond with ONLY a JSON object. No other text, no markdown formatting, no explanations before or after. Any text that isn't part of the JSON object will cause a system error.
 
-You are an expert crypto portfolio analyst. Your task is to analyze the following data and respond with a structured JSON analysis.
-
-WALLET DATA:
-Wallet Address: ${address}
-Chain: ${chain}
-Token Balances: ${JSON.stringify(tokenBalances, null, 2)}
-Transaction History: ${JSON.stringify(transactions, null, 2)}
-Market Trends (7 Days): ${JSON.stringify(topTokens, null, 2)}
-
-ANALYSIS REQUIREMENTS:
-1. Calculate unrealized PnL using exact token prices from the 7-day market data
-2. Identify missed trading opportunities based on price fluctuations
-3. Analyze transaction timing against market movements
-4. Evaluate portfolio risks including:
-   - Insufficient funds for staking
-   - Underperforming tokens
-   - Missed buy/sell opportunities
-5. Provide actionable trading suggestions based on market trends
-
-RESPONSE RULES:
-- Start your response with the opening brace {
-- End your response with the closing brace }
-- Include no text before the opening brace or after the closing brace
-- Ensure the response is valid JSON that can be parsed with JSON.parse()
-- Do not use comments or explanations
-- Do not use markdown formatting
+You are an expert crypto portfolio analyst. You know how to analyse the crypto market. If you are given the data then you can analyse the market according to the required parameters. You are supposed to analyse the user’s given data and generate a report in a well structured manner with proper JSON object mentioned below: 
 
 REQUIRED JSON STRUCTURE:
 {
@@ -88,11 +86,52 @@ REQUIRED JSON STRUCTURE:
     "vulnerable_assets": [
         {
             "asset_name": "token name",
+            "asset_token_symbol": "token symbol",
             "reason": "Specific vulnerability: insufficient funds/losses/missed opportunities"
         }
     ],
     "suggestions": "List specific actionable trades based on 7-day price trends"
+    "market_trend_analysis": {
+        "top_gainer": {
+            "token_name": "name",
+            "price_change": "change in price"
+        },
+        "top_loser": {
+            "token_name": "name",
+            "price_change": "change in price"
+        }
+    }
 }
+
+WALLET DATA:
+Wallet Address: ${address}
+Chain: ${chain}
+Token Balances: ${JSON.stringify(tokenBalances, null, 2)}
+Transaction History: ${JSON.stringify(transactions, null, 2)}
+Market Trends (7 Days): ${JSON.stringify(topTokens, null, 2)}
+
+ANALYSIS REQUIREMENTS:
+
+1. Identify missed trading opportunities based on price fluctuations
+2. Analyze transaction timing against market movements
+3. Evaluate portfolio risks including:
+   - Insufficient funds for staking
+   - Underperforming tokens
+   - Missed buy/sell opportunities
+4. Provide actionable trading suggestions based on market trends
+5. The unrealisedPnL can be calculated from taking out the average of the last 7 days of the token prices from the market data.
+6. for user's token/assets you might get the token balance in the form of hexadecimal value, you need to convert it into a the given chain token value.
+7. After converting the token value, you can convert the token value into USD using the current price from the market data.
+9. For top gainers and losers you can use the data of the top 10 tokens from the market data and then you can find the top gainer and top loser from that data.
+
+RESPONSE RULES:
+- Start your response with the opening brace {
+- End your response with the closing brace }
+- Include no text before the opening brace or after the closing brace
+- Ensure the response is valid JSON that can be parsed with JSON.parse()
+- Do not use comments or explanations
+- Do not use markdown formatting
+- Do not hallucinate on your own because the value coming out of this data is of high importance and should have least risk apetite.
 
 REMEMBER: Your response must be a valid JSON object only. No other text. Start with { and end with }`;
 };

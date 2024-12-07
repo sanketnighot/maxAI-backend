@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import analyzeRoutes from './routes/analyzeRoutes';
 // import agentRoutes from './routes/agentRoute';
 import baseAnalysisRoutes from './routes/baseAnalysis';
+import categorisationRoutes from './routes/categorisationAPI';
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +39,7 @@ app.get('/', (req: Request, res: Response) => {
 // API Routes
 app.use('/api', analyzeRoutes);
 app.use("/api", baseAnalysisRoutes);
+app.use("/api", categorisationRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
