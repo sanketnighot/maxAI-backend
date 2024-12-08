@@ -170,7 +170,7 @@ export const getWalletCategorization = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: response,
+      data: JSON.stringify(response),
     });
   } catch (error) {
     console.error("Categorization error:", error);
