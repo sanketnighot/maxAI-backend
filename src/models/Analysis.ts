@@ -33,29 +33,68 @@ export interface IAnalysis extends Document {
 }
 
 const AnalysisSchema: Schema = new Schema({
-    unrealised_pnl: { type: String, required: true },
-    user_wallet_address: { type: String, required: true },
-    chain: { type: String, required: true },
-    tokens: [{
-        token_name: { type: String, required: true },
-        token_address: { type: String, required: true },
-        token_balance: { type: String, required: true },
-        token_price_in_USD: { type: String, required: true }
-    }],
-    transaction_history: [{
-        transaction_id: { type: String, required: true },
-        transaction_type: { type: String, required: true },
-        transaction_amount: { type: String, required: true },
-        transaction_time: { type: String, required: true },
-        transaction_status: { type: String, required: true }
-    }],
-    short_descriptive_analysis_of_portfolio: { type: String, required: true },
-    vulnerable_assets: [{
-        asset_name: { type: String, required: true },
-        reason: { type: String, required: true }
-    }],
-    suggestions: { type: String, required: true },
-    timestamp: { type: Number, required: true }
+  unrealised_pnl: { type: String }, // Optional to handle clean wallets
+  user_wallet_address: { type: String, required: true },
+  chain: { type: String, required: true },
+  tokens: [
+    {
+      token_name: { type: String },
+      token_address: { type: String },
+      token_balance: { type: String },
+      token_price_in_USD: { type: String },
+    },
+  ],
+  transaction_history: [
+    {
+      transaction_id: { type: String },
+      transaction_type: { type: String },
+      transaction_amount: { type: String },
+      transaction_time: { type: String },
+      transaction_status: { type: String },
+    },
+  ],
+  short_descriptive_analysis_of_portfolio: { type: String },
+  vulnerable_assets: [
+    {
+      asset_name: { type: String },
+      asset_token_symbol: { type: String },
+      reason: { type: String },
+    },
+  ],
+  yield_opportunities: [
+    {
+      token_name: { type: String },
+      protocol: { type: String },
+      apy: { type: String },
+      tvl: { type: String },
+      risk_level: { type: String },
+    },
+  ],
+  suggestions: {
+    stake: {
+      token_name: { type: String },
+      amount: { type: String },
+      recommended_protocol: { type: String },
+      expected_apy: { type: String },
+    },
+    move: {
+      token_name: { type: String },
+      from: { type: String },
+      to: { type: String },
+      amount: { type: String },
+    },
+  },
+  market_trend_analysis: {
+    top_gainer: {
+      token_name: { type: String },
+      price_change: { type: String },
+    },
+    top_loser: {
+      token_name: { type: String },
+      price_change: { type: String },
+    },
+  },
+  timestamp: { type: Number, default: Date.now }, // Auto-set timestamp
 });
 
-export default mongoose.model<IAnalysis>('Analysis', AnalysisSchema); 
+export default mongoose.model<IAnalysis>("Analysis", AnalysisSchema);

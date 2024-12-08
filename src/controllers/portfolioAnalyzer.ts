@@ -10,6 +10,7 @@ import { AnalyzeRequest } from "../utils/types";
 import { generateAIPrompt } from "../utils/ai";
 import { initializeAgent } from "./baseAgent";
 import Analysis from "../models/Analysis";
+import { fetchYieldOpportunities } from "../utils/yield";
 
 export const portfolioAnalyzer = async (req: Request, res: Response) => {
   try {
@@ -29,13 +30,20 @@ export const portfolioAnalyzer = async (req: Request, res: Response) => {
     const topTokens = await fetchTopTokensByMarketCap(duration);
     console.log(topTokens);
 
+    // 3.5 Fetch yield opportunities for user's tokens
+    const userTokenAddresses = tokenBalances.tokenBalances.map(
+      (token: any) => token.contractAddress.toLowerCase()
+    );
+    const yieldOpportunities = await fetchYieldOpportunities(userTokenAddresses);
+
     // 4. Generate AI prompt and get analysis
     const prompt = generateAIPrompt(
       address,
       chain,
       transactions.transfers,
       tokenBalances.tokenBalances,
-      topTokens
+      topTokens,
+      yieldOpportunities
     );
 
     // 5. Initialize the Base onchain agent
@@ -50,9 +58,10 @@ export const portfolioAnalyzer = async (req: Request, res: Response) => {
     const aiAnalysis = JSON.parse(result.messages[1].content as string);
     console.log(aiAnalysis);
 
-    // 8. Save to MongoDB
+    // 8. Save to MongoDB - Convert suggestions to string before saving
     const analysis = new Analysis({
       ...aiAnalysis,
+      suggestions: JSON.stringify(aiAnalysis.suggestions), // Convert object to string
       timestamp: currentTimestamp,
     });
     await analysis.save();

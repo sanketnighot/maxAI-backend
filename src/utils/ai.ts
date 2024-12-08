@@ -1,6 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { TokenPrice } from '../utils/types';
 
+interface YieldOpportunity {
+    token_name: string;
+    protocol: string;
+    apy: string;
+    tvl: string;
+    risk_level: string;
+}
+
 interface AIAnalysisResponse {
     unrealised_pnl: string;
     user_wallet_address: string;
@@ -24,10 +32,13 @@ interface AIAnalysisResponse {
         asset_token_symbol: string;
         reason: string;
     }>;
+    yield_opportunities: Array<YieldOpportunity>;
     suggestions: {
         stake: {
             token_name: string;
             amount: string;
+            recommended_protocol: string;
+            expected_apy: string;
         };
         move: {
             token_name: string;
@@ -54,6 +65,7 @@ export const generateAIPrompt = (
     transactions: any[],
     tokenBalances: any[],
     topTokens: TokenPrice[],
+    yieldOpportunities: any[],
 ): string => {
     return `
 CRITICAL: You must respond with ONLY a JSON object. No other text, no markdown formatting, no explanations before or after. Any text that isn't part of the JSON object will cause a system error.
@@ -90,7 +102,29 @@ REQUIRED JSON STRUCTURE:
             "reason": "Specific vulnerability: insufficient funds/losses/missed opportunities"
         }
     ],
-    "suggestions": "List specific actionable trades based on 7-day price trends"
+    "yield_opportunities": [
+        {
+            "token_name": "token name",
+            "protocol": "protocol name",
+            "apy": "annual percentage yield",
+            "tvl": "total value locked",
+            "risk_level": "low/medium/high based on protocol age, TVL, and audit status"
+        }
+    ],
+    "suggestions": {
+        "stake": {
+            "token_name": "token to stake",
+            "amount": "amount to stake",
+            "recommended_protocol": "protocol name",
+            "expected_apy": "expected annual yield"
+        },
+        "move": {
+            "token_name": "token to move",
+            "from": "from token",
+            "to": "to token",
+            "amount": "amount to move"
+        }
+    },
     "market_trend_analysis": {
         "top_gainer": {
             "token_name": "name",
@@ -109,6 +143,7 @@ Chain: ${chain}
 Token Balances: ${JSON.stringify(tokenBalances, null, 2)}
 Transaction History: ${JSON.stringify(transactions, null, 2)}
 Market Trends (7 Days): ${JSON.stringify(topTokens, null, 2)}
+Yield Opportunities: ${JSON.stringify(yieldOpportunities, null, 2)}
 
 ANALYSIS REQUIREMENTS:
 
@@ -125,7 +160,13 @@ ANALYSIS REQUIREMENTS:
     - Avoid Maximum/Minimum Price Differences: Unrealised PnL is not about hypothetical high or low prices but the actual value if the asset were sold now.
 6. for user's token/assets you might get the token balance in the form of hexadecimal value, you need to convert it into a the given chain token value.
 7. After converting the token value, you can convert the token value into USD using the current price from the market data.
+8. Analyze yield opportunities:
+   - Match user's tokens with available yield pools
+   - Consider protocol security and TVL
+   - Calculate potential earnings based on user's balance
+   - Recommend optimal staking strategies
 9. For top gainers and losers you can use the data of the top 10 tokens from the market data and then you can find the top gainer and top loser from that data.
+10. Most of the times the unrealisedPnL is 0, Recheck it as there should be some value based out of the transaction and the token price changes.
 
 RESPONSE RULES:
 - Start your response with the opening brace {
@@ -135,6 +176,7 @@ RESPONSE RULES:
 - Do not use comments or explanations
 - Do not use markdown formatting
 - Do not hallucinate on your own because the value coming out of this data is of high importance and should have least risk apetite.
+- Please make sure to check on your data as most of the time you say that the address does not have any funds or transaction history, but it is there in the etherscan.
 
 REMEMBER: Your response must be a valid JSON object only. No other text. Start with { and end with }`;
 };
