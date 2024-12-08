@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Network, Alchemy } from "alchemy-sdk";
+import BigNumber from "bignumber.js";
 
 interface CategorizedToken {
   token_name: string;
@@ -102,6 +103,18 @@ const TOKEN_CATEGORIES = {
 
 type CategoryKey = keyof CategoryResponse["categories"];
 
+async function fetchTokenMetadataWithRetry(alchemy: Alchemy, contractAddress: string, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const metadata = await alchemy.core.getTokenMetadata(contractAddress);
+      return metadata;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+    }
+  }
+}
+
 export const getWalletCategorization = async (req: Request, res: Response) => {
   try {
     const { address, chain = "ethereum" } = req.params;
@@ -133,30 +146,53 @@ export const getWalletCategorization = async (req: Request, res: Response) => {
     };
 
     for (const balance of tokenBalances.tokenBalances) {
-      // Fetch token metadata
-      const metadata = await alchemy.core.getTokenMetadata(
-        balance.contractAddress
-      );
+      try {
+        const metadata = await fetchTokenMetadataWithRetry(alchemy, balance.contractAddress);
+        if (!metadata) continue; // Skip if metadata is undefined
+        
+        const tokenInfo: CategorizedToken = {
+          token_name: metadata.name || "Unknown",
+          token_symbol: metadata.symbol || "Unknown",
+          balance: convertBalance(
+            balance.tokenBalance ?? undefined,
+            metadata.decimals ?? undefined
+          ),
+        };
 
-      const tokenInfo: CategorizedToken = {
-        token_name: metadata.name || "Unknown",
-        token_symbol: metadata.symbol || "Unknown",
-        balance: balance.tokenBalance || "0",
-      };
-
-      const symbol = metadata.symbol?.toUpperCase();
-      let categorized = false;
-
-      for (const [category, tokens] of Object.entries(TOKEN_CATEGORIES)) {
-        if (tokens.includes(symbol || "")) {
-          response.categories[category as CategoryKey].push(tokenInfo);
-          categorized = true;
-          break;
+        function convertBalance(
+          hexBalance: string | undefined,
+          decimals: number | undefined
+        ): string {
+          if (!hexBalance) return "0";
+          try {
+            const rawBalance = new BigNumber(hexBalance, 16); // Convert hex to decimal
+            const adjustedBalance = rawBalance.dividedBy(
+              new BigNumber(10).pow(decimals || 0)
+            ); // Adjust for decimals
+            return adjustedBalance.toString(10); // Return as a human-readable string
+          } catch (error) {
+            console.error("Error converting balance:", error);
+            return "0";
+          }
         }
-      }
 
-      if (!categorized) {
-        response.categories.Others.push(tokenInfo);
+        const symbol = metadata.symbol?.toUpperCase();
+        let categorized = false;
+
+        for (const [category, tokens] of Object.entries(TOKEN_CATEGORIES)) {
+          if (tokens.includes(symbol || "")) {
+            response.categories[category as CategoryKey].push(tokenInfo);
+            categorized = true;
+            break;
+          }
+        }
+
+        if (!categorized) {
+          response.categories.Others.push(tokenInfo);
+        }
+      } catch (error) {
+        console.error(`Failed to fetch metadata for token ${balance.contractAddress}:`, error);
+        continue; // Skip this token and continue with others
       }
     }
 
@@ -170,7 +206,7 @@ export const getWalletCategorization = async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: JSON.stringify(response),
+      data: response,
     });
   } catch (error) {
     console.error("Categorization error:", error);
